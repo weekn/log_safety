@@ -24,7 +24,7 @@ import org.json4s.jackson.Serialization
 import org.json4s.jvalue2monadic
 import org.json4s.string2JsonInput
 
-//nfjd.sparkstm.LogEtl
+//com.nfjd.LogEtl
 object LogEtl {
   case class Syslog(
     firstrecvtime: String,
@@ -44,7 +44,7 @@ object LogEtl {
     val ssc = new StreamingContext(conf, Seconds(1))
 
     val kafkaParams = Map[String, Object](
-     // "bootstrap.servers" -> "192.168.181.234:9092", //"172.17.17.21:9092,172.17.17.22:9092",
+      // "bootstrap.servers" -> "192.168.181.234:9092", //"172.17.17.21:9092,172.17.17.22:9092",
       "bootstrap.servers" -> "172.17.17.21:9092,172.17.17.22:9092",
       "key.deserializer" -> classOf[StringDeserializer],
       "value.deserializer" -> classOf[StringDeserializer],
@@ -61,13 +61,9 @@ object LogEtl {
       Subscribe[String, String](topics, kafkaParams))
     val data = stream.map(record => record.value)
 
-    //    dealFlow(data)
-    //    dealNetFlow(data)
-    // dealSyslog_invadeEvent(data)
-    // data.print()
-    //dealSysLog(patterns, data, ssc)
-    //dealSysLog2(broadcastVar, data)
-    dealSysLog(patterns,data)
+    dealFlow(data)
+    dealNetFlow(data)
+    dealSysLog(patterns, data)
     ssc.start()
     ssc.awaitTermination()
   }
@@ -83,41 +79,11 @@ object LogEtl {
     })
     (topics, patterns)
   }
-  def dealSysLog2(patterns_bro: Broadcast[Seq[Pattern]], data: DStream[String]): Unit = {
 
-    val rr = data.map(line => {
-      val patterns = patterns_bro.value
-      print(patterns)
-      val pattern = for {
-        p <- patterns
-        val reg = new Regex(p.pattern)
-        if reg.findFirstIn(line).getOrElse(0) != 0
-      } yield p
-      if (pattern.length == 0) {
-        "none"
-      } else {
-        val reg = new Regex(pattern(0).pattern)
-        reg.findFirstMatchIn(line) match {
-          case Some(s) => {
-            var res_map: Map[String, String] = Map("test" -> "test")
-            for (field <- pattern(0).fields) {
-              res_map = res_map + (field._1 -> s.group(Integer.parseInt(field._2)))
-            }
-            res_map
-          }
-          case None => "none"
-        }
-      }
-
-    }).filter(x => x != "none")
-    rr.print()
-    rr.saveToEs("spark_test/syslog")
-
-  }
   def dealSysLog(patterns: Seq[Pattern], data: DStream[String]): Unit = {
-  
+
     for (pattern <- patterns) {
-     
+
       val rr = data.map(line => {
         // broadcastVar.value
         val reg = new Regex(pattern.pattern)
@@ -133,7 +99,7 @@ object LogEtl {
         }
       }).filter(x => x != "none")
       rr.saveToEs("spark_test/syslog")
-      
+
       rr.print()
     }
   }
