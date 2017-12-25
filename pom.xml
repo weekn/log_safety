@@ -1,0 +1,176 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.nfjd</groupId>
+	<artifactId>log_safety</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<java.version>1.8</java.version>
+
+	</properties>
+	<build>
+
+
+
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.0</version>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+					<encoding>UTF-8</encoding>
+					<verbal>true</verbal>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>3.1.0</version>
+				<configuration>
+					<createDependencyReducedPom>true</createDependencyReducedPom>
+
+				</configuration>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<transformers>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+									<mainClass></mainClass>
+								</transformer>
+							</transformers>
+							<artifactSet>
+								<includes>
+									<include>org.apache.kafka:kafka-clients</include>
+									<!-- <include>org.apache.kafka:kafka_2.11</include> -->
+									<include>org.apache.spark:spark-streaming-kafka-0-10_2.11</include>
+									<include>org.elasticsearch:elasticsearch-spark-20_2.11</include>
+								</includes>
+
+							</artifactSet>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+
+			<plugin>
+				<groupId>net.alchim31.maven</groupId>
+				<artifactId>scala-maven-plugin</artifactId>
+				<version>3.3.1</version>
+				<executions>
+					<execution>
+						<id>eclipse-add-source</id>
+						<goals>
+							<goal>add-source</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>scala-compile-first</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>compile</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>scala-test-compile-first</id>
+						<phase>process-test-resources</phase>
+						<goals>
+							<goal>testCompile</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>attach-scaladocs</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>doc-jar</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<scalaVersion>2.11.8</scalaVersion>
+					<recompileMode>incremental</recompileMode>
+					<useZincServer>true</useZincServer>
+					<args>
+						<arg>-unchecked</arg>
+						<arg>-deprecation</arg>
+						<arg>-feature</arg>
+					</args>
+					<!--<jvmArgs> -->
+					<!--<jvmArg>-Xms1024m</jvmArg> -->
+					<!--<jvmArg>-Xmx1024m</jvmArg> -->
+					<!--<jvmArg>-XX:PermSize=${PermGen}</jvmArg> -->
+					<!--<jvmArg>-XX:MaxPermSize=${MaxPermGen}</jvmArg> -->
+					<!--<jvmArg>-XX:ReservedCodeCacheSize=${CodeCacheSize}</jvmArg> -->
+					<!--</jvmArgs> -->
+					<javacArgs>
+						<javacArg>-source</javacArg>
+						<javacArg>${java.version}</javacArg>
+						<javacArg>-target</javacArg>
+						<javacArg>${java.version}</javacArg>
+						<javacArg>-Xlint:all,-serial,-path</javacArg>
+					</javacArgs>
+				</configuration>
+			</plugin>
+		</plugins>
+
+	</build>
+	<dependencies>
+		<dependency>
+			<groupId>org.apache.spark</groupId>
+			<artifactId>spark-core_2.11</artifactId>
+			<version>2.2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.spark</groupId>
+			<artifactId>spark-streaming_2.11</artifactId>
+			<version>2.2.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.elasticsearch</groupId>
+			<artifactId>elasticsearch-spark-20_2.11</artifactId>
+			<version>5.6.4</version>
+			<exclusions>
+
+				<exclusion>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
+
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.spark</groupId>
+			<artifactId>spark-streaming-kafka-0-10_2.11</artifactId>
+			<version>2.2.0</version>
+			<exclusions>
+
+				<exclusion>
+					<groupId>org.apache.kafka</groupId>
+					<artifactId>kafka_2.11</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.kafka</groupId>
+			<artifactId>kafka-clients</artifactId>
+			<version>0.10.0.1</version>
+		</dependency>
+		<!-- <dependency> -->
+		<!-- <groupId>org.apache.kafka</groupId> -->
+		<!-- <artifactId>kafka_2.11</artifactId> -->
+		<!-- <version>0.10.0.1</version> -->
+		<!-- </dependency> -->
+	</dependencies>
+</project>
