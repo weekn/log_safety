@@ -23,10 +23,23 @@ import org.json4s.jackson.JsonMethods.render
 import org.json4s.jackson.Serialization
 import org.json4s.jvalue2monadic
 import org.json4s.string2JsonInput
-import com.nfjd.model.RegPattern
-//com.nfjd.LogEtl
-object LogEtl {
 
+import com.nfjd.SyslogPorcess
+import com.nfjd.model.RegPattern
+//com.nfjd.LogEtlStm
+object LogEtlStm {
+  case class Syslog(
+    firstrecvtime: String,
+    reportapp: String,
+    reportip: String,
+    sourceip: String,
+    sourceport: String,
+    destip: String,
+    destport: String,
+    eventname: String,
+    eventlevel: String,
+    orgid: String)
+ // case class Pattern(pattern: String, fields: Seq[(String, String)])
   def main(args: Array[String]) {
 
     val conf = new SparkConf().setAppName("nfjd-log-etl").set("es.nodes", "172.17.17.30").set("es.port", "9200").setMaster("local[2]")
@@ -52,7 +65,7 @@ object LogEtl {
 
     dealFlow(data)
     dealNetFlow(data)
-    dealSysLog(patterns, data)
+    dealSysLog(broadcastVar, data)
     ssc.start()
     ssc.awaitTermination()
   }
@@ -69,28 +82,11 @@ object LogEtl {
     (topics, patterns)
   }
 
-  def dealSysLog(patterns: Seq[RegPattern], data: DStream[String]): Unit = {
-
-    for (pattern <- patterns) {
-
-      val rr = data.map(line => {
-        // broadcastVar.value
-        val reg = new Regex(pattern.pattern)
-        reg.findFirstMatchIn(line) match {
-          case Some(s) => {
-            var res_map: Map[String, String] = Map("test" -> "test")
-            for (field <- pattern.fields) {
-              res_map = res_map + (field._1 -> s.group(Integer.parseInt(field._2)))
-            }
-            res_map
-          }
-          case None => "none"
-        }
-      }).filter(x => x != "none")
-      rr.saveToEs("spark_test/syslog")
-
-      rr.print()
-    }
+  def dealSysLog(patterns_bro: Broadcast[Seq[RegPattern]], data: DStream[String]): Unit = {
+   
+    val rr = data.flatMap(log => new SyslogPorcess().run(patterns_bro.value,log)).filter(x => x != "none")
+    rr.print()
+    rr.saveToEs("spark_test/syslog")
   }
   def dealFlow(data: DStream[String]): Unit = {
 
@@ -127,5 +123,41 @@ object LogEtl {
     }).saveJsonToEs("spark_test/netflow")
   }
 
- 
+  def dealSyslog_invadeEvent(line: DStream[String]): Unit = {
+    val etl_res1 = line.filter(f => {
+      val pattern = """.*?\|\!((?:\d{1,3}\.){3}\d{1,3})\|.*\{.*"time":(.*),"source":\{"\w+":"(.*)","port":(\d+),.*,"destination":\{"\w+":"(.*)","port":(\d+),.*\},.*"protocol":"(.*)","subject":"(.*)","message":.*""".r
+      val res = pattern findFirstIn f
+      res match {
+        case Some(s) => true
+        case None => false
+      }
+    })
+    val etl_res = etl_res1.map(line => {
+      val pattern = new Regex(""".*?\|\!((?:\d{1,3}\.){3}\d{1,3})\|.*\{.*"time":(.*),"source":\{"\w+":"(.*)","port":(\d+),.*,"destination":\{"\w+":"(.*)","port":(\d+),.*\},.*"protocol":"(.*)","subject":"(.*)","message":.*""")
+      val res = pattern findFirstMatchIn line
+      res match {
+        case Some(s) => {
+
+          val sysLog = Syslog(
+            firstrecvtime = s.group(1),
+            reportapp = s.group(1),
+            reportip = s.group(1),
+            sourceip = s.group(3),
+            sourceport = s.group(4),
+            destip = s.group(5),
+            destport = s.group(6),
+            eventname = s.group(7),
+            eventlevel = s.group(8),
+            orgid = s.group(1))
+          implicit val formats = Serialization.formats(ShortTypeHints(List()))
+          compact(Extraction.decompose(sysLog))
+        }
+        case None => "none"
+      }
+
+    })
+    etl_res.saveJsonToEs("spark_test/syslog")
+    etl_res1.print()
+    etl_res.print()
+  }
 }
