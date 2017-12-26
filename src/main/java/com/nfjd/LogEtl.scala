@@ -57,12 +57,12 @@ object LogEtl {
     ssc.awaitTermination()
   }
   def readConfig(): (Array[String], Seq[RegPattern]) = {
-    val xml = XML.loadFile("config.xml")
+     val xml = XML.loadFile("config.xml")
     val topics = (xml \ "kafka_topics" \ "topic").map(x => x.text).toArray
 
     val patterns = (xml \ "patterns" \ "pattern").map(x => {
 
-      RegPattern(pattern = (x \ "content").text, fields = (x \ "field").map(s => {
+      RegPattern(id=(x\"@id").text,pattern = (x \ "content").text, fields = (x \ "field").map(s => {
         ((s \ "@id").text, (s \ "@group").text)
       }))
     })

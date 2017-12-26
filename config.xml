@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+	<kafka_topics>
+		<topic>zwj_test1</topic>
+		
+	</kafka_topics>
+	<patterns>
+		<pattern id="at">
+			<content>(\d+)\s+.*attack_name\(\d+\)=(.*);app_protocol_name.*=\(\d+\)(.*);protocol.*src_ip\(\d+\)=(.*);src_port\(\d+\)=(.*);dst_ip\(\d+\)=(.*);dst_port\(\d+\)=(.*);block_reason.*</content>
+			<field id="OPENTIME" group="1"/>
+			<field id="PROTO" group="3"/>
+			<field id="SRCIP" group="4"/>
+			<field id="PROTO" group="2"/>
+			<field id="PROTO" group="2"/>
+			<field id="PROTO" group="2"/>
+		</pattern>
+		<pattern id="ids">
+			<content>.+\{.*"time":(.*),"source":\{"\w+":"(.*)","port":(\d+),.*,"destination":\{"\w+":"(.*)","port":(\d+),.*\},.*"protocol":"(.*)","subject":"(.*)","message":.*</content>
+			<field id="firstrecvtime" group="1"/>
+			<field id="sourceip" group="2"/>
+			<field id="port" group="3"/>
+			<field id="destip" group="4"/>
+			<field id="destport" group="5"/>
+			<field id="eventname" group="6"/>
+		</pattern>
+	</patterns>
+</config>
