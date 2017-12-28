@@ -19,6 +19,7 @@ object SyslogProcess {
     "destport", "destip", "eventation", "reportnetype", "eventdefid", "rventname", "eventname2",
     "eventname2", "approto", "getparameter", "orglog", "logruleid")
   def run(patterns: Seq[RegPattern], log: String): List[Map[String, Any]] = {
+   
     val pattern = for {
       p <- patterns
       val reg = new Regex(p.pattern)
