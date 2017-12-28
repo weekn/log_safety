@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
-	<kafka_topics>
+	<log_servers>192.168.181.234:9092</log_servers>
+	<log_topic>test</log_topic>
+	<es_serves>192.168.181.234</es_serves>
+	<kafka_spark_servers>192.168.181.234:9092,192.168.181.234:9092</kafka_spark_servers>
+	<kafka_spark_topics>
 		<topic>zwj_test1</topic>
 		
-	</kafka_topics>
+	</kafka_spark_topics>
 	<patterns>
 		<pattern id="at">
 			<content>(\d+)\s+.*attack_name\(\d+\)=(.*);app_protocol_name.*=\(\d+\)(.*);protocol.*src_ip\(\d+\)=(.*);src_port\(\d+\)=(.*);dst_ip\(\d+\)=(.*);dst_port\(\d+\)=(.*);block_reason.*</content>
