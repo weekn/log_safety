@@ -13,6 +13,7 @@ import scala.util.matching.Regex
 import com.nfjd.model.RegPattern
 import java.text.SimpleDateFormat
 import java.util.Date
+import com.nfjd.util.TimeUtil
 
 object SyslogProcess {
   val all_key = List("row", "firstrecvtime", "reprotapp", "reportid", "sourceip", "sourceport",
@@ -56,7 +57,14 @@ object SyslogProcess {
           "reportip" -> reportIp,
           "orglog" -> orglog)
         for (field <- regPattern.fields) {
-          res_map = res_map + (field._1 -> s.group(Integer.parseInt(field._2)))
+          val k=field._1
+          val v=s.group(Integer.parseInt(field._2))
+          if(k=="firstrecvtime" && v.isInstanceOf[String]){//时间统一成时间撮
+            res_map = res_map + (k -> TimeUtil.convert2stamp(v))
+          }else{
+            res_map = res_map + (field._1 -> s.group(Integer.parseInt(field._2)))
+          }
+          
         }
         //补充废弃，或缺失的字段
         for (key <- all_key) {

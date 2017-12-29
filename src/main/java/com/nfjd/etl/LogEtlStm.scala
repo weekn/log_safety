@@ -40,7 +40,7 @@ object LogEtlStm {
     conf.set("es.nodes", configUtil.es_serves).set("es.port", "9200")
     conf.set("es.index.auto.create", "true")
     conf.set("spark.streaming.stopGracefullyOnShutdown","true")
-    conf.set("spark.streaming.kafka.maxRatePerPartition", "4000")
+    conf.set("spark.streaming.kafka.maxRatePerPartition", "2000")
     val ssc = new StreamingContext(conf, Seconds(1))
 
     val kafkaParams = Map[String, Object](
