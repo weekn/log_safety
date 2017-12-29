@@ -18,8 +18,9 @@ object FlowProcess {
       implicit val formats = Serialization.formats(ShortTypeHints(List())) 
       var map=parse(json_str).extract[Map[String,Any]]
       val uri=map.apply("Uri").asInstanceOf[String]
-      if(uri.indexOf(".jsp")<0 &&exclude_uri.findFirstIn(uri).getOrElse(0)!=0){
+      if(uri.indexOf(".jsp")<0 &&exclude_uri.findFirstIn(uri).getOrElse(0)==0){
         map=map+("es_type"->"flow")
+        map=map+("es_index"->"flow")
         List(map)
       }else{
         List()

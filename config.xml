@@ -9,23 +9,35 @@
 		
 	</kafka_spark_topics>
 	<patterns>
-		<pattern id="at">
+		<pattern id="ips">
 			<content>(\d+)\s+.*attack_name\(\d+\)=(.*);app_protocol_name.*=\(\d+\)(.*);protocol.*src_ip\(\d+\)=(.*);src_port\(\d+\)=(.*);dst_ip\(\d+\)=(.*);dst_port\(\d+\)=(.*);block_reason.*</content>
-			<field id="OPENTIME" group="1"/>
-			<field id="PROTO" group="3"/>
-			<field id="SRCIP" group="4"/>
-			<field id="PROTO" group="2"/>
-			<field id="PROTO" group="2"/>
-			<field id="PROTO" group="2"/>
+			<field id="sourceip" group="3"/>
+			<field id="sourceport" group="4"/>
+			<field id="destip" group="5"/>
+			<field id="destport" group="6"/>
 		</pattern>
 		<pattern id="ids">
 			<content>.+\{.*"time":(.*),"source":\{"\w+":"(.*)","port":(\d+),.*,"destination":\{"\w+":"(.*)","port":(\d+),.*\},.*"protocol":"(.*)","subject":"(.*)","message":.*</content>
 			<field id="firstrecvtime" group="1"/>
 			<field id="sourceip" group="2"/>
-			<field id="port" group="3"/>
+			<field id="sourceport" group="3"/>
 			<field id="destip" group="4"/>
 			<field id="destport" group="5"/>
-			<field id="eventname" group="6"/>
+			<field id="eventname" group="7"/>
+		</pattern>
+		<pattern id="nta">
+			<content>.*logtype=.*;datetime=(.*);eventID=.*dstip=(.*);eventType=(.*);severity=.*description=(.*)</content>
+			<field id="firstrecvtime" group="1"/>
+			<field id="destip" group="2"/>
+			<field id="eventname" group="3"/>
+		</pattern>
+		<pattern id="ads">
+			<content>.*Attack:(.*)\s+src=(.*)\s+dst=(.*)\s+sport=(.*)\s+dport=(\d+).*</content>
+			<field id="firstrecvtime" group="1"/>
+			<field id="sourceip" group="2"/>
+			<field id="sourceport" group="4"/>
+			<field id="destip" group="3"/>
+			<field id="eventname" group="1"/>
 		</pattern>
 	</patterns>
 </config>

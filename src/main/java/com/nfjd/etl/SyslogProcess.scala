@@ -49,6 +49,7 @@ object SyslogProcess {
     reg.findFirstMatchIn(log) match {
       case Some(s) => {
         var res_map: Map[String, String] = Map(
+          "es_index" -> "syslog",
           "es_type" -> "genlog",
           "reportapp" -> "SYSLOG_LOG",
           "logruleid" -> regPattern.id,
@@ -71,6 +72,7 @@ object SyslogProcess {
   def buildSyslog(log: String, reportIp: String, ismatch: Int): Map[String, Any] = {
     val time_stamp = (new Date().getTime + "").toLong
     val syslog_map = Map(
+      "es_index" -> "syslog",
       "es_type" -> "syslog",
       "recvtime" -> time_stamp,
       "storagetime" -> time_stamp,

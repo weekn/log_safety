@@ -38,6 +38,7 @@ object LogEtlStm {
     configUtil.readConfig()
     val conf = new SparkConf().setAppName("nfjd-log-etl").setMaster("local[2]")
     conf.set("es.nodes", configUtil.es_serves).set("es.port", "9200")
+    conf.set("es.index.auto.create", "true")
     conf.set("spark.streaming.stopGracefullyOnShutdown","true")
     conf.set("spark.streaming.kafka.maxRatePerPartition", "4000")
     val ssc = new StreamingContext(conf, Seconds(1))
@@ -94,6 +95,7 @@ object LogEtlStm {
         } else {
           NetflowProcess.run(log)
         }
+       
       }catch{
         case e: Exception => {
          
@@ -111,7 +113,7 @@ object LogEtlStm {
 
     })
 
-    rr.saveToEs("spark_test/{es_type}")
+    rr.saveToEs("{es_index}/{es_type}")
   }
 
 }
