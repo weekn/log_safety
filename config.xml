@@ -33,11 +33,19 @@
 		</pattern>
 		<pattern id="ads">
 			<content>.*Attack:(.*)\s+src=(.*)\s+dst=(.*)\s+sport=(.*)\s+dport=(\d+).*</content>
-			<field id="firstrecvtime" group="1"/>
 			<field id="sourceip" group="2"/>
 			<field id="sourceport" group="4"/>
 			<field id="destip" group="3"/>
 			<field id="eventname" group="1"/>
+		</pattern>
+		<pattern id="ads">
+			<content>.*waf:.*stat_time:(.*)event_type:(.*)dst_ip:(.*)dst_port:(\d+)\s+(url:.*){0,1}src_ip:(.*)src_port:(.*)method.*</content>
+			<field id="firstrecvtime" group="1"/>
+			<field id="sourceport" group="4"/>
+			<field id="destip" group="4"/>
+			<field id="destport" group="3"/>
+			<field id="sourceip" group="6"/>
+			<field id="sourceport" group="7"/>
 		</pattern>
 	</patterns>
 </config>

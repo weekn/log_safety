@@ -48,7 +48,7 @@ object SyslogProcess {
     val reg = new Regex(regPattern.pattern)
     reg.findFirstMatchIn(log) match {
       case Some(s) => {
-        var res_map: Map[String, String] = Map(
+        var res_map: Map[String, Any] = Map(
           "es_index" -> "syslog",
           "es_type" -> "genlog",
           "reportapp" -> "SYSLOG_LOG",
@@ -61,7 +61,12 @@ object SyslogProcess {
         //补充废弃，或缺失的字段
         for (key <- all_key) {
           if (res_map.contains(key)) {
-            res_map = res_map + (key -> " ")
+            if(key=="firstrecvtime"){
+              res_map = res_map + (key -> (new Date().getTime + "").toLong)
+            }else{
+               res_map = res_map + (key -> " ")
+            }
+           
           }
         }
         res_map
