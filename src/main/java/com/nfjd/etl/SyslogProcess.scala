@@ -60,7 +60,7 @@ object SyslogProcess {
         }
         //补充废弃，或缺失的字段
         for (key <- all_key) {
-          if (res_map.contains(key)) {
+          if (!res_map.contains(key)) {
             if(key=="firstrecvtime"){
               res_map = res_map + (key -> (new Date().getTime + "").toLong)
             }else{
