@@ -1,4 +1,4 @@
-package nfjd.sparkstm
+package com.nfjd.etl
 import scala.util.matching.Regex
 import scala.xml.XML
 

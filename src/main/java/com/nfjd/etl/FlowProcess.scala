@@ -1,4 +1,4 @@
-package com.nfjd
+package com.nfjd.etl
 import scala.util.matching.Regex
 import org.json4s.Extraction
 import org.json4s.JObject
@@ -11,7 +11,7 @@ import org.json4s.jackson.Serialization
 import org.json4s.jvalue2monadic
 import org.json4s.string2JsonInput
 object FlowProcess {
-  val exclude_uri="""\.css|\.js""".r
+  val exclude_uri="""\.css|\.js|\.png|\.jpg|\.bmp""".r
   def run(log:String):List[Map[String, Any]]={
       val pattern = new Regex("""netlog_http.(\{.*\})""")
       val json_str=pattern.findFirstMatchIn(log).get.group(1)

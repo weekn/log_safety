@@ -1,4 +1,4 @@
-package com.nfjd
+package com.nfjd.etl
 import scala.util.matching.Regex
 import org.json4s.Extraction
 import org.json4s.JObject

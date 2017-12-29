@@ -1,4 +1,4 @@
-package com.nfjd
+package com.nfjd.etl
 import org.json4s.Extraction
 import org.json4s.JObject
 import org.json4s.JsonDSL.list2jvalue
