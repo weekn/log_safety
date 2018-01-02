@@ -19,6 +19,7 @@ object FlowProcess {
       var map=parse(json_str).extract[Map[String,Any]]
       val uri=map.apply("Uri").asInstanceOf[String]
       if(uri.indexOf(".jsp")<0 &&exclude_uri.findFirstIn(uri).getOrElse(0)==0){
+        map=mapKey2LowerCase(map)
         map=map+("es_type"->"flow")
         map=map+("es_index"->"flow")
         List(map)
@@ -26,5 +27,12 @@ object FlowProcess {
         List()
       }
       
+  }
+  def mapKey2LowerCase(map:Map[String, Any]):Map[String, Any]={
+    var res_map:Map[String, Any]=Map()
+    for(k<-map.keySet){
+      res_map=res_map+(k.toLowerCase()->map.apply(k))
+    }
+    res_map
   }
 }

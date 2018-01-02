@@ -23,6 +23,7 @@ object NetflowProcess {
 
         } yield {
           var map = JObject(child).extract[Map[String, Any]]
+          map=mapKey2LowerCase(map)
           map = map + ("es_type" -> "netflow")
           map = map + ("es_index" -> "netflow")
           map
@@ -31,5 +32,12 @@ object NetflowProcess {
       case None=>List()
     }
 
+  }
+  def mapKey2LowerCase(map:Map[String, Any]):Map[String, Any]={
+    var res_map:Map[String, Any]=Map()
+    for(k<-map.keySet){
+      res_map=res_map+(k.toLowerCase()->map.apply(k))
+    }
+    res_map
   }
 }

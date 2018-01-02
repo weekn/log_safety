@@ -30,17 +30,17 @@ import org.elasticsearch.spark._
 import com.nfjd.util.TimeUtil
 import com.nfjd.util.ConfigUtil
 
-//com.nfjd.LogEtlStm
+//com.nfjd.etl.LogEtlStm
 object LogEtlStm {
 
   def main(args: Array[String]) {
     val configUtil=new ConfigUtil()
     configUtil.readConfig()
-    val conf = new SparkConf().setAppName("nfjd-log-etl").setMaster("local[2]")
+    val conf = new SparkConf().setAppName("nfjd-log-etl")//.setMaster("local[2]")
     conf.set("es.nodes", configUtil.es_serves).set("es.port", "9200")
     conf.set("es.index.auto.create", "true")
     conf.set("spark.streaming.stopGracefullyOnShutdown","true")
-    conf.set("spark.streaming.kafka.maxRatePerPartition", "2000")
+    conf.set("spark.streaming.kafka.maxRatePerPartition", "3000")
     val ssc = new StreamingContext(conf, Seconds(1))
 
     val kafkaParams = Map[String, Object](
@@ -48,7 +48,7 @@ object LogEtlStm {
       // "bootstrap.servers" -> "172.17.17.21:9092,172.17.17.22:9092",
       "key.deserializer" -> classOf[StringDeserializer],
       "value.deserializer" -> classOf[StringDeserializer],
-      "group.id" -> "1",
+      "group.id" -> "safety_log_etl",
       "auto.offset.reset" -> "latest",
       "enable.auto.commit" -> (false: java.lang.Boolean))
 
@@ -84,7 +84,7 @@ object LogEtlStm {
 
 
   def dealLog(patterns_bro: Broadcast[Seq[RegPattern]], rdd: RDD[ConsumerRecord[String, String]]): Unit = {
-
+ 
     val rr = rdd.flatMap(record => {
       val log = record.value()
       try {
