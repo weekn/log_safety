@@ -14,11 +14,12 @@ import com.nfjd.model.RegPattern
 import java.text.SimpleDateFormat
 import java.util.Date
 import com.nfjd.util.TimeUtil
-
+import java.util.UUID
 object SyslogProcess {
-  val all_key = List("row", "firstrecvtime", "reprotapp", "reportid", "sourceip", "sourceport",
-    "destport", "destip", "eventation", "reportnetype", "eventdefid", "rventname", "eventname2",
-    "eventname2", "approto", "getparameter", "orglog", "logruleid")
+  val genlog_all_key = List("row","recordid", "actionresult","firstrecvtime", "reprotapp", "reportid", "sourceip", "sourceport",
+    "destport", "destip", "eventaction", "reportnetype", "eventdefid", "eventname", "eventname2",
+    "eventname3", "appproto", "getparameter", "orglog", "logruleid","eventlevel","orgid","url","getparameter")
+   
   def run(patterns: Seq[RegPattern], log: String): List[Map[String, Any]] = {
    
     val pattern = for {
@@ -27,10 +28,11 @@ object SyslogProcess {
       if reg.findFirstIn(log).getOrElse(0) != 0
     } yield p
     val (reportIp, orglog) = getReportIpAndOrglog(log)
+    val syslog_recordid=UUID.randomUUID().toString()
     if (pattern.length == 0) { //没有匹配到日志，返回syslog
-      List(buildSyslog(log, reportIp, 0))
+      List(buildSyslog(log, reportIp,syslog_recordid, 0))
     } else { //匹配到日志了,生成genlog，按理所应该只匹配到一条pattern,所以这里是pattern(0)
-      List(buildSyslog(log, reportIp, 1), buildGenlog(log, reportIp, orglog, pattern(0)))
+      List(buildSyslog(log, reportIp,syslog_recordid, 1), buildGenlog(log, reportIp,syslog_recordid, orglog, pattern(0)))
     }
   }
   def getReportIpAndOrglog(log: String): (String, String) = {
@@ -45,17 +47,19 @@ object SyslogProcess {
     }
 
   }
-  def buildGenlog(log: String, reportIp: String, orglog: String, regPattern: RegPattern): Map[String, Any] = {
+  def buildGenlog(log: String, reportIp: String,syslog_recordid:String, orglog: String, regPattern: RegPattern): Map[String, Any] = {
     val reg = new Regex(regPattern.pattern)
     reg.findFirstMatchIn(log) match {
       case Some(s) => {
         var res_map: Map[String, Any] = Map(
-          "es_index" -> "syslog",
+          "es_index" -> "genlog",
           "es_type" -> "genlog",
           "reportapp" -> "SYSLOG_LOG",
           "logruleid" -> regPattern.id,
           "reportip" -> reportIp,
-          "orglog" -> orglog)
+          "orglog" -> orglog,
+          "orgid"->syslog_recordid,
+          "recordid"->UUID.randomUUID().toString())
         for (field <- regPattern.fields) {
           val k=field._1
           val v=s.group(Integer.parseInt(field._2))
@@ -67,7 +71,7 @@ object SyslogProcess {
           
         }
         //补充废弃，或缺失的字段
-        for (key <- all_key) {
+        for (key <- genlog_all_key) {
           if (!res_map.contains(key)) {
             if(key=="firstrecvtime"){
               res_map = res_map + (key -> (new Date().getTime + "").toLong)
@@ -82,7 +86,7 @@ object SyslogProcess {
       case None => Map()
     }
   }
-  def buildSyslog(log: String, reportIp: String, ismatch: Int): Map[String, Any] = {
+  def buildSyslog(log: String, reportIp: String, recordid:String,ismatch: Int): Map[String, Any] = {
     val time_stamp = (new Date().getTime + "").toLong
     val syslog_map = Map(
       "es_index" -> "syslog",
@@ -92,6 +96,7 @@ object SyslogProcess {
       "reportapp" -> "SYSLOG_LOG",
       "reportip" -> reportIp,
       "row" -> " ",
+      "recordid"->recordid,
       "ismatch" -> ismatch,
       "logcontent" -> log)
     syslog_map

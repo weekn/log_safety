@@ -24,6 +24,7 @@ object NetflowProcess {
         } yield {
           var map = JObject(child).extract[Map[String, Any]]
           map=mapKey2LowerCase(map)
+          map = map + ("recordid" -> " ")
           map = map + ("es_type" -> "netflow")
           map = map + ("es_index" -> "netflow")
           map

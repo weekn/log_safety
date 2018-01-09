@@ -11,10 +11,11 @@
 	<patterns>
 		<pattern id="ips">
 			<content>(\d+)\s+.*attack_name\(\d+\)=(.*);app_protocol_name.*=\(\d+\)(.*);protocol.*src_ip\(\d+\)=(.*);src_port\(\d+\)=(.*);dst_ip\(\d+\)=(.*);dst_port\(\d+\)=(.*);block_reason.*</content>
-			<field id="sourceip" group="3"/>
-			<field id="sourceport" group="4"/>
-			<field id="destip" group="5"/>
-			<field id="destport" group="6"/>
+			<field id="eventname" group="2"/>
+			<field id="sourceip" group="4"/>
+			<field id="sourceport" group="5"/>
+			<field id="destip" group="6"/>
+			<field id="destport" group="7"/>
 		</pattern>
 		<pattern id="ids">
 			<content>.+\{.*"time":(.*),"source":\{"\w+":"(.*)","port":(\d+),.*,"destination":\{"\w+":"(.*)","port":(\d+),.*\},.*"protocol":"(.*)","subject":"(.*)","message":.*</content>
