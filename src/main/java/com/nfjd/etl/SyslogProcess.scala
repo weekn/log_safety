@@ -19,7 +19,7 @@ object SyslogProcess {
   val genlog_all_key = List("row","recordid", "actionresult","firstrecvtime", "reprotapp", "reportid", "sourceip", "sourceport",
     "destport", "destip", "eventaction", "reportnetype", "eventdefid", "eventname", "eventname2",
     "eventname3", "appproto", "getparameter", "orglog", "logruleid","eventlevel","orgid","url","getparameter")
-   
+ 
   def run(patterns: Seq[RegPattern], log: String): List[Map[String, Any]] = {
    
     val pattern = for {
@@ -65,6 +65,10 @@ object SyslogProcess {
           val v=s.group(Integer.parseInt(field._2))
           if(k=="firstrecvtime" && v.isInstanceOf[String]){//时间统一成时间撮
             res_map = res_map + (k -> TimeUtil.convert2stamp(v))
+          }else if(k=="eventname"){//给eventname2 取值 eventname的 hashcode
+          	val v_hashcoe=v.hashCode().toString()+"hashcode"
+          	res_map = res_map + ("eventname" ->v)
+            res_map = res_map + ("eventname3" ->v_hashcoe)
           }else{
             res_map = res_map + (field._1 -> s.group(Integer.parseInt(field._2)))
           }

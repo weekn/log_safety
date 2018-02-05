@@ -40,7 +40,7 @@
 			<field id="eventname" group="1"/>
 		</pattern>
 		<pattern id="waf">
-			<content>.*waf:.*stat_time:(.*)event_type:(.*)dst_ip:(.*)dst_port:(\d+)\s+(url:.*){0,1}src_ip:(.*)src_port:(.*)method.*</content>
+			<content>.*waf.*stat_time:(.*)event_type:(.*)dst_ip:(.*)dst_port:(\d+)\s*(url:.*){0,1}src_ip:(.*)src_port:(\d+).*method.*</content>
 			<field id="firstrecvtime" group="1"/>
 			<field id="sourceport" group="4"/>
 			<field id="destip" group="4"/>
