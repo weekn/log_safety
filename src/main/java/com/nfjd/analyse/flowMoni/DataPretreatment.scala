@@ -15,8 +15,7 @@ import org.apache.spark.SparkContext
 
 //com.nfjd.analyse.netflowAnalyse.DataPretreatment
 object DataPretreatment {
-	val structFields = List(StructField("label", StringType), StructField("uri", StringType))
-	val types = StructType(structFields)
+	
 	def main(args: Array[String]): Unit = {
 		
 	}
@@ -29,22 +28,31 @@ object DataPretreatment {
 		val ts=current-day*86400
 
 		val data = df.filter(df("date").gt(ts).and(df("date").lt(current))).select(df.col("uri"),df.col("date"),df.col("srcip"),df.col("dstip"))
-		data.write.parquet("hdfs://172.17.17.24:8020/analyse/flowMoni/testData1")
+		val sch=data.schema
+		//data.write.parquet("hdfs://172.17.17.24:8020/analyse/flowMoni/testData1")
 		val r=data.rdd.map(line=>{
+			
+			var seq=line.toSeq
+			val uri_index=line.fieldIndex("uri")
 			val pattern="""\?(.*)""".r
 			val res=pattern.findFirstIn(line.getAs[String]("uri"))
 			res match{
 				case Some(s)=>{
-					Row("sql",URLDecoder.decode(s.replaceAll("%(?![0-9a-fA-F]{2})", "%25")).toLowerCase())
+					
+					val rcode=URLDecoder.decode(s.replaceAll("%(?![0-9a-fA-F]{2})", "%25")).toLowerCase()
+					val r_seq=seq.updated(uri_index, rcode)
+					Row.fromSeq(r_seq)
 				}
 				case None=>{
-					Row("sql","go")
+//					val r_seq=seq.updated(uri_index, "eeeeeeeeeeeee")
+//					Row.fromSeq(r_seq)
+					null
 				}
 			}
 			
-		})
+		}).filter(f=>f!=null)
 		
-		val rdata = sqlContext.createDataFrame(r, types)
+		val rdata = sqlContext.createDataFrame(r, sch)
 		rdata
 		
 	}

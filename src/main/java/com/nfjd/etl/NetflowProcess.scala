@@ -31,11 +31,14 @@ object NetflowProcess {
 					map = map + ("es_type" -> "netflow")
 					map = map + ("es_index" -> "netflow")
 					try{
-						val packernum=map.apply("downpkts").asInstanceOf[Int]+map.apply("uppkts").asInstanceOf[Int]
+						val packernum=map.getOrElse("downpkts", 0).asInstanceOf[BigInt]+map.getOrElse("uppkts", 0).asInstanceOf[BigInt]
 						map=map+("packernum" ->packernum)
 					}catch{
 						case e:Exception=>{
 							println("???只是加个字段而已，就是加个字段而已，为了之后的分析用而已")
+							println(e.getMessage)
+							println(e.getStackTrace)
+							//e.printStackTrace()
 						}
 					}
 					
