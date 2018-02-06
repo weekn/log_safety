@@ -30,34 +30,39 @@ object PredictOffline {
 
 		predict.foreachPartition(rdd_i => {
 			println("---------")
-			
+
 			val conn = PgSqlUtil.getPGConnection()
 			rdd_i.foreach(row => {
-				val id = "ignore"+UUID.randomUUID().toString()
+				val id = "ignore" + UUID.randomUUID().toString()
 				val date = new Timestamp(row.getAs[Long]("date") * 1000)
 				val srcip = row.getAs[String]("srcip")
 				val dstip = row.getAs[String]("dstip")
-				val uri = row.getAs[String]("uri")
+				val uri = row.getAs[String]("uri_ori")
 				val predictionnb = row.getAs[Double]("predictionRF")
 				val probabilitynb = row.getAs[DenseVector]("probabilityRF").apply(0)
+				val predictedLabelnb=row.getAs[String]("predictedLabelRF")
+				
 				val predictionlr = row.getAs[Double]("predictionLR")
 				val probabilitylr = row.getAs[DenseVector]("probabilityLR").apply(0)
-
-				val prep = conn.prepareStatement(
-					"""INSERT INTO public.t_moni_flow_predict(id,date,srcip,dstip,uri,predictionnb,probabilitynb,predictionlr,probabilitylr,url)  
+				val predictedLabellr=row.getAs[String]("predictedLabelLR")
+				
+				if (predictedLabelnb == "sql" || predictedLabellr == "sql" ) {
+					val prep = conn.prepareStatement(
+						"""INSERT INTO public.t_moni_flow_predict(id,date,srcip,dstip,uri,predictionnb,probabilitynb,predictionlr,probabilitylr,url)  
 																												                               VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?); """
-				)
-				prep.setString(1, id)
-				prep.setTimestamp(2, date)
-				prep.setString(3, srcip)
-				prep.setString(4, dstip)
-				prep.setString(5, uri)
-				prep.setDouble(6, predictionnb)
-				prep.setDouble(7, probabilitynb)
-				prep.setDouble(8, predictionlr)
-				prep.setDouble(9, probabilitylr)
-				prep.setString(10, uri)
-				prep.execute()
+					)
+					prep.setString(1, id)
+					prep.setTimestamp(2, date)
+					prep.setString(3, srcip)
+					prep.setString(4, dstip)
+					prep.setString(5, uri)
+					prep.setDouble(6, predictionnb)
+					prep.setDouble(7, probabilitynb)
+					prep.setDouble(8, predictionlr)
+					prep.setDouble(9, probabilitylr)
+					prep.setString(10, uri)
+					prep.execute()
+				}
 
 			})
 			conn.close()

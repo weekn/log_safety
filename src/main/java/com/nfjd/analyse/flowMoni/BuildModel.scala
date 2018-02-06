@@ -24,6 +24,8 @@ import org.apache.spark.ml.classification.RandomForestClassifier
 import org.apache.spark.ml.classification.LogisticRegression
 import org.apache.spark.sql.DataFrameReader
 import org.apache.spark.sql.DataFrame
+import org.ansj.splitWord.analysis.DicAnalysis
+
 //com.nfjd.analyse.flowMoni.BuildModel
 
 object BuildModel {
@@ -53,8 +55,8 @@ object BuildModel {
 		val word2Vec = new Word2Vec()
 			.setInputCol("words")
 			.setOutputCol("words2vec")
-			.setVectorSize(800)
-			.setMinCount(1).fit(data1)
+			.setVectorSize(300).setMaxIter(200)
+			.setMinCount(3).fit(data1)
 		val data2 = word2Vec.transform(data1)
 		val labelIndexer = new StringIndexer()
 			.setInputCol("label")
@@ -100,6 +102,9 @@ object BuildModel {
 		val pipeline = new Pipeline()
 			.setStages(Array(regexTokenizer, word2Vec, labelIndexer, featureIndexer, lr, rf, labelConverterLR, labelConverterRF))
 		val model = pipeline.fit(traindata)
+
+		
+		
 		model.save("hdfs://172.17.17.24:8020/analyse/flowMoni/model")
 		//		val predictions = model.transform(data_test)
 		//
@@ -111,22 +116,23 @@ object BuildModel {
 		//		println("Test Error = " + (1.0 - accuracy))
 
 	}
-	def getData(path: String): DataFrame = {
+	def getData(path: String, label: String): DataFrame = {
 		val rdd = sc.textFile(path)
-		val rowRdd = rdd.map(line => Row("normal", URLDecoder.decode(line.replaceAll("%(?![0-9a-fA-F]{2})", "%25")).toLowerCase()))
+		val rowRdd = rdd.map(line => {
+			val s = URLDecoder.decode(line.replaceAll("%(?![0-9a-fA-F]{2})", "%25")).toLowerCase()
+			val r = DicAnalysis.parse(s).toStringWithOutNature("|")
+			Row(label, r)
+		})
 		val data = sqlContext.createDataFrame(rowRdd, types)
 		data
 	}
 	def getTrainData(path_pos: String, path_neg: String): DataFrame = {
-		val rdd_sql = sc.textFile(path_neg)
-		val rdd_normal = sc.textFile(path_pos)
-		//Rdd的数据，里面的数据类型要和之前的StructField里面数据类型对应。否则会报错。
-		val rowRdd_sql = rdd_sql.map(line => Row("sql", URLDecoder.decode(line.replaceAll("%(?![0-9a-fA-F]{2})", "%25")).toLowerCase()))
-		val rowRdd_normal = rdd_normal.map(line => Row("normal", URLDecoder.decode(line.replaceAll("%(?![0-9a-fA-F]{2})", "%25")).toLowerCase()))
-		val rowRdd = rowRdd_sql.union(rowRdd_normal)
 
-		val data = sqlContext.createDataFrame(rowRdd, types)
-		data
+		val rowRdd_sql = getData(path_pos, "normal")
+		val rowRdd_normal = getData(path_pos, "sql")
+		val rowRdd = rowRdd_sql.union(rowRdd_normal)
+		rowRdd
+
 	}
 
 }

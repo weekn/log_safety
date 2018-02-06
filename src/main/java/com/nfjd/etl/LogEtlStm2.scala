@@ -34,7 +34,7 @@ import java.sql.ResultSet
 import com.nfjd.util.PgSqlUtil
 
 //com.nfjd.etl.LogEtlStm
-object LogEtlStm {
+object LogEtlStm2 {
 
 	def main(args: Array[String]) {
 		val configUtil = new ConfigUtil()
@@ -125,6 +125,12 @@ object LogEtlStm {
 	}
 	def dealLog(flowlogRule: Broadcast[ArrayBuffer[Map[String, String]]], rdd: RDD[ConsumerRecord[String, String]]): Unit = {
 		//rdd.mapPartitions(f, preservesPartitioning)
+		val rr2=rdd.mapPartitions(iter=>{
+			while(iter.hasNext){
+				val log = iter.next().value()
+			}
+			iter
+		})
 		val rr = rdd.flatMap(record => {
 
 			val log = record.value()
@@ -152,8 +158,7 @@ object LogEtlStm {
 			}
 
 		})
-		//rr.take(100).foreach(println)
-		//rr.coalesce(3)
+	
 		rr.saveToEs("{es_index}/{es_type}")
 	}
 

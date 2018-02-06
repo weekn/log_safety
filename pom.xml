@@ -55,6 +55,8 @@
 									<include>org.apache.spark:spark-streaming-kafka-0-10_2.11</include>
 									<include>org.elasticsearch:elasticsearch-spark-20_2.11</include>
 									<include>org.postgresql:postgresql</include>
+									<include>org.ansj:ansj_seg</include>
+									<include>org.nlpcn:nlp-lang</include>
 								</includes>
 
 							</artifactSet>
@@ -183,6 +185,17 @@
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<version>42.1.4</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.ansj</groupId>
+			<artifactId>ansj_seg</artifactId>
+			<version>5.1.5</version>
+		</dependency>
+		<dependency>
+			<groupId>org.nlpcn</groupId>
+			<artifactId>nlp-lang</artifactId>
+			<version>1.7.7</version>
 		</dependency>
 		<!-- <dependency> -->
 		<!-- <groupId>org.apache.kafka</groupId> -->

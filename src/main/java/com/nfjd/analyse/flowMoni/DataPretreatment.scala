@@ -27,7 +27,7 @@ object DataPretreatment {
 		val current=TimeUtil.getCurrentTimeStamp()
 		val ts=current-day*86400
 
-		val data = df.filter(df("date").gt(ts).and(df("date").lt(current))).select(df.col("uri"),df.col("date"),df.col("srcip"),df.col("dstip"))
+		val data = df.filter(df("date").gt(ts).and(df("date").lt(current))).select(df.col("uri"),df.col("uri").as("uri_ori"),df.col("date"),df.col("srcip"),df.col("dstip"))
 		val sch=data.schema
 		//data.write.parquet("hdfs://172.17.17.24:8020/analyse/flowMoni/testData1")
 		val r=data.rdd.map(line=>{
@@ -40,7 +40,8 @@ object DataPretreatment {
 				case Some(s)=>{
 					
 					val rcode=URLDecoder.decode(s.replaceAll("%(?![0-9a-fA-F]{2})", "%25")).toLowerCase()
-					val r_seq=seq.updated(uri_index, rcode)
+					var r_seq=seq.updated(uri_index, rcode)
+				
 					Row.fromSeq(r_seq)
 				}
 				case None=>{

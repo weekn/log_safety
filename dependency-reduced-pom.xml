@@ -38,6 +38,8 @@
                   <include>org.apache.spark:spark-streaming-kafka-0-10_2.11</include>
                   <include>org.elasticsearch:elasticsearch-spark-20_2.11</include>
                   <include>org.postgresql:postgresql</include>
+                  <include>org.ansj:ansj_seg</include>
+                  <include>org.nlpcn:nlp-lang</include>
                 </includes>
               </artifactSet>
             </configuration>
