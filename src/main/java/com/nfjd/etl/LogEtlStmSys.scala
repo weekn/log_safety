@@ -47,8 +47,8 @@ object LogEtlStmSys {
     conf.set("spark.streaming.kafka.maxRatePerPartition","3000")      //限制每秒每个消费线程读取每个kafka分区最大的数据量
     conf.set("spark.streaming.receiver.maxRate","10000")      //设置每次接收的最大数量
     conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")   //使用Kryo序列化
-    conf.set("spark.scheduler.mode","FAIR")
-    conf.set("spark.streaming.concurrentJobs","2")
+//    conf.set("spark.scheduler.mode","FAIR")
+//    conf.set("spark.streaming.concurrentJobs","2")
    //	conf.setExecutorEnv(variable, value)
     val ssc = new StreamingContext(conf, Seconds(5))
 
@@ -57,7 +57,7 @@ object LogEtlStmSys {
       // "bootstrap.servers" -> "172.17.17.21:9092,172.17.17.22:9092",
       "key.deserializer" -> classOf[StringDeserializer],
       "value.deserializer" -> classOf[StringDeserializer],
-      "group.id" -> "safety_log_etl",
+      "group.id" -> "safelog_etl_01",
       "auto.offset.reset" -> "latest",
       "enable.auto.commit" -> (false: java.lang.Boolean))
 
@@ -71,7 +71,7 @@ object LogEtlStmSys {
    
     stream.foreachRDD(rdd => {
       val offsetRanges = rdd.asInstanceOf[HasOffsetRanges].offsetRanges
-      rdd.repartition(60)
+      
       try {
         dealLog(bc_pattern, rdd)
 
@@ -79,9 +79,9 @@ object LogEtlStmSys {
       } catch {
 
         case e: Exception => {
-          val kafkaProducer = new KafkaProducerUtil(configUtil.log_servers,configUtil.log_topic)
-          kafkaProducer.send("error", e.getMessage)
-          kafkaProducer.close()
+//          val kafkaProducer = new KafkaProducerUtil(configUtil.log_servers,configUtil.log_topic)
+//          kafkaProducer.send("error", e.getMessage)
+//          kafkaProducer.close()
           e.printStackTrace()
         }
       }

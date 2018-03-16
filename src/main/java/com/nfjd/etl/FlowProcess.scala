@@ -15,17 +15,23 @@ import java.util.UUID
 import org.apache.spark.broadcast.Broadcast
 import scala.collection.mutable.ArrayBuffer
 import java.net.URLDecoder
-
+import scala.collection.mutable.{ Map => MutableMap }
 object FlowProcess {
 	val exclude_uri = """\.css|\.js|\.png|\.jpg|\.bmp|\.ico""".r
 	//val exclude_uri = """\.css""".r
 
-	def run(log: String, flowlogRule: Broadcast[ArrayBuffer[Map[String, String]]]): List[Map[String, Any]] = {
-		val pattern = new Regex("""netlog_http.(\{.*\})""")
-		val json_str = pattern.findFirstMatchIn(log).get.group(1)
+	def run(log: String, flowlogRule: Broadcast[ArrayBuffer[Map[String, String]]]): List[MutableMap[String, Any]] = {
+		val pattern = new Regex("""(\{.*\})""")
+		pattern.findFirstIn(log) match {
+			case Some(s) =>successMatch(s,flowlogRule)
+			case None=>List()
+		}
+
+	}
+	def successMatch(s: String,flowlogRule: Broadcast[ArrayBuffer[Map[String, String]]]): List[MutableMap[String, Any]] = {
 		implicit val formats = Serialization.formats(ShortTypeHints(List()))
-		var map = parse(json_str).extract[Map[String, Any]]
-		val uri = map.apply("Uri").asInstanceOf[String]
+		val map = parse(s).extract[Map[String, Any]]
+		val uri=map.getOrElse("Uri", " ").toString()
 		if (uri.indexOf(".jsp") < 0 && exclude_uri.findFirstIn(uri).getOrElse(0) == 0) {
 			val res_map = completeMap(map)
 			try {
@@ -35,20 +41,24 @@ object FlowProcess {
 				} else {
 					List(res_map)
 				}
-			}catch {
-         case ex: Exception =>{
-            println( ex)
-         }
-         List(res_map)
-         
-      }
+			} catch {
+				case ex: Exception =>
+					{
+						println(ex)
+					}
+					List(res_map)
+
+			}
 
 		} else {
 			List()
 		}
-
 	}
-	def matchFlowlogRule(map: Map[String, Any], uri: String, flowlogRule: Broadcast[ArrayBuffer[Map[String, String]]]): String = {
+	def matchFlowlogRule(
+			map: MutableMap[String, Any],
+			uri: String,
+			flowlogRule: Broadcast[ArrayBuffer[Map[String, String]]]
+	): String = {
 		val rules = flowlogRule.value
 		val uir_decoded = URLDecoder.decode(uri.replaceAll("%(?![0-9a-fA-F]{2})", "%25")).toLowerCase()
 		val log_srcip = map.apply("srcip")
@@ -70,29 +80,28 @@ object FlowProcess {
 		}
 		matched_ruleid
 	}
-	def completeMap(map: Map[String, Any]): Map[String, Any] = {
-		var res_map: Map[String, Any] = getAllKeyMap()
-		res_map = res_map + ("flowcontent" -> map)
+	def completeMap(map: Map[String, Any]): MutableMap[String, Any] = {
+		val res_map: MutableMap[String, Any] = getAllKeyMap()
+		res_map += ("flowcontent" -> map)
 
 		for (k <- map.keySet) {
 			val key = k.toLowerCase()
 			if (key == "date") {
-				res_map = res_map + (key -> TimeUtil.convert2stamp(map.apply(k).asInstanceOf[String]))
+				res_map += (key -> TimeUtil.convert2stamp(map.apply(k).asInstanceOf[String]))
 			} else {
-				res_map = res_map + (key -> map.apply(k))
+				res_map += (key -> map.apply(k))
 			}
 
 		}
 
 		res_map
 	}
-	def getAllKeyMap(): Map[String, Any] = {
-		val all_key_map = Map(
+	def getAllKeyMap(): MutableMap[String, Any] = {
+		val all_key_map: MutableMap[String, Any] = MutableMap(
 			"id" -> UUID.randomUUID().toString(),
 			"es_type" -> "flow",
 			"es_index" -> "flow",
 			"host" -> " ",
-			"id" -> " ",
 			"mailattach" -> " ",
 			"mailattachpath" -> " ",
 			"mailbcc" -> " ",

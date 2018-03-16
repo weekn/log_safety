@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
-	<log_servers>192.168.181.234:9092</log_servers>
-	<log_topic>test</log_topic>
-	<es_serves>192.168.181.234</es_serves>
-	<kafka_spark_servers>192.168.181.234:9092,192.168.181.234:9092</kafka_spark_servers>
+	<log_servers>172.17.17.21:9092</log_servers>
+	<log_topic>safety_error_log</log_topic>
+	<es_serves>172.17.17.30,172.17.17.31,172.17.17.32</es_serves>
+	<kafka_spark_servers>172.17.17.21:9092,172.17.17.22:9092,172.17.17.23:9092</kafka_spark_servers>
 	<kafka_spark_topics>
-		<topic>zwj_test1</topic>
+		
+		<topic>networklog</topic>
 		
 	</kafka_spark_topics>
 	<patterns>
 		<pattern id="ips">
 			<content>(\d+)\s+.*attack_name\(\d+\)=(.*);app_protocol_name.*=\(\d+\)(.*);protocol.*src_ip\(\d+\)=(.*);src_port\(\d+\)=(.*);dst_ip\(\d+\)=(.*);dst_port\(\d+\)=(.*);block_reason.*</content>
-			<field id="eventname" group="2"/>
+		 	<field id="eventname" group="2"/>
 			<field id="sourceip" group="4"/>
 			<field id="sourceport" group="5"/>
 			<field id="destip" group="6"/>
@@ -42,9 +43,9 @@
 		<pattern id="waf">
 			<content>.*waf.*stat_time:(.*)event_type:(.*)dst_ip:(.*)dst_port:(\d+)\s*(url:.*){0,1}src_ip:(.*)src_port:(\d+).*method.*</content>
 			<field id="firstrecvtime" group="1"/>
-			<field id="sourceport" group="4"/>
-			<field id="destip" group="4"/>
-			<field id="destport" group="3"/>
+			<field id="eventname" group="2"/>
+			<field id="destip" group="3"/>
+			<field id="destport" group="4"/>
 			<field id="sourceip" group="6"/>
 			<field id="sourceport" group="7"/>
 		</pattern>

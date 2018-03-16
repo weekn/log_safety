@@ -11,28 +11,29 @@ import org.json4s.jackson.Serialization
 import org.json4s.jvalue2monadic
 import org.json4s.string2JsonInput
 import java.util.UUID
-
+import scala.collection.mutable.{Map=>MutableMap}
 object NetflowProcess {
-	def run(log: String): List[Map[String, Any]] = {
+	def run(log: String): List[ MutableMap[String, Any]] = {
 		val pattern = new Regex("""send a message:.\[(\[.*\])\]""")
 		pattern.findFirstMatchIn(log) match {
 			case Some(s) => {
 				val json_str = s.group(1)
 				val json_obj = parse(json_str)
 				implicit val formats = Serialization.formats(ShortTypeHints(List()))
-				val res = parse(json_str).extract[List[Map[String, Any]]]
+				val res:List[Map[String, Any]] = parse(json_str).extract[List[Map[String, Any]]]
+				
 				for {
-					m <- res
+					mm<- res
 				} yield {
-					var map = m
-					map = mapKey2LowerCase(map)
+					
+					val map = mapKey2LowerCase(mm)
 
-					map = map + ("recordid" -> UUID.randomUUID().toString())
-					map = map + ("es_type" -> "netflow")
-					map = map + ("es_index" -> "netflow")
+					map +=("recordid" -> UUID.randomUUID().toString())
+					map += ("es_type" -> "netflow")
+					map += ("es_index" -> "netflow")
 					try{
 						val packernum=map.getOrElse("downpkts", 0).asInstanceOf[BigInt]+map.getOrElse("uppkts", 0).asInstanceOf[BigInt]
-						map=map+("packernum" ->packernum)
+						map+=("packernum" ->packernum)
 					}catch{
 						case e:Exception=>{
 							println("???只是加个字段而已，就是加个字段而已，为了之后的分析用而已")
@@ -49,11 +50,11 @@ object NetflowProcess {
 		}
 
 	}
-	def mapKey2LowerCase(map: Map[String, Any]): Map[String, Any] = {
+	def mapKey2LowerCase(map: Map[String, Any]): MutableMap[String, Any] = {
 		
-		var res_map: Map[String, Any] = Map()
+		val res_map:MutableMap[String,Any] =MutableMap()
 		for (k <- map.keySet) {
-			res_map = res_map + (k.toLowerCase() -> map.apply(k))
+			 res_map += (k.toLowerCase() -> map.apply(k))
 		}
 		res_map
 	}

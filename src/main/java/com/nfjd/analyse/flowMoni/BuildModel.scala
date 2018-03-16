@@ -24,39 +24,33 @@ import org.apache.spark.ml.classification.RandomForestClassifier
 import org.apache.spark.ml.classification.LogisticRegression
 import org.apache.spark.sql.DataFrameReader
 import org.apache.spark.sql.DataFrame
-import org.ansj.splitWord.analysis.DicAnalysis
 
 //com.nfjd.analyse.flowMoni.BuildModel
 
 object BuildModel {
-	val conf = new SparkConf().setAppName("MoniFlowAnalyse_train") //.setMaster("local[2]")
-	val sc = new SparkContext(conf)
-	val sqlContext = new SQLContext(sc)
-	val structFields = List(StructField("label", StringType), StructField("uri", StringType))
-	val types = StructType(structFields)
+
 	def main(args: Array[String]) {
-		//demo()
-
-		val structFields = List(StructField("label", StringType), StructField("uri", StringType))
-		//最后通过StructField的集合来初始化表的模式。
-		val types = StructType(structFields)
-
-		val traindata = getTrainData(
-			"hdfs://172.17.17.24:8020/analyse/flowMoni/normal.txt",
-			"hdfs://172.17.17.24:8020/analyse/flowMoni/sql.txt"
-		)
-
+		val conf = new SparkConf().setAppName("MoniFlowAnalyse_train") //.setMaster("local[2]")
+		conf.set("es.nodes", "172.17.17.30,172.17.17.31,172.17.17.32").set("es.port", "9300")
+		conf.set("spark.yarn.executor.memoryOverhead", "4024")
+		//conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer") //使用Kryo序列化
+		//conf.set("spark.kryo.registrator", "com.nfjd.analyse.flowMoni.MyRegisterKryo")
+		val sc = new SparkContext(conf)
+		val sqlContext = new SQLContext(sc)
+		val datapretreater = new DataPretreater(sqlContext)
+		val traindata = datapretreater.getTrainData()
+		
 		val regexTokenizer = new RegexTokenizer()
 			.setInputCol("uri")
 			.setOutputCol("words")
-			.setPattern("""\s|\(|\)|\&|\=|\d|\,|\;|\/|\?|\%|\||\.""")
+			.setPattern("""\s|\(|\)|\-|\d|\,|\;|\/|\?|\%|\||\.""")
 		val data1 = regexTokenizer.transform(traindata)
 
 		val word2Vec = new Word2Vec()
 			.setInputCol("words")
 			.setOutputCol("words2vec")
-			.setVectorSize(300).setMaxIter(200)
-			.setMinCount(3).fit(data1)
+			.setVectorSize(300).setMaxIter(300)
+			.setMinCount(1).fit(data1)
 		val data2 = word2Vec.transform(data1)
 		val labelIndexer = new StringIndexer()
 			.setInputCol("label")
@@ -69,21 +63,18 @@ object BuildModel {
 			.setMaxCategories(4) // features with > 4 distinct values are treated as continuous.
 			.fit(data2)
 
-		//		val rf = new RandomForestClassifier()
-		//			.setLabelCol("indexedLabel")
-		//			.setFeaturesCol("indexedFeatures")
-		//			.setMaxDepth(4)
-		//			.setNumTrees(300)
+		
 
 		val rf = new RandomForestClassifier()
 			.setLabelCol("indexedLabel")
 			.setFeaturesCol("indexedFeatures")
 			.setMaxDepth(4)
+			.setSubsamplingRate(0.8)
 			.setNumTrees(300)
 			.setPredictionCol("predictionRF").setProbabilityCol("probabilityRF").setRawPredictionCol("rawprobabilityRF")
 
 		val lr = new LogisticRegression()
-			.setMaxIter(100)
+			.setMaxIter(200)
 			.setRegParam(0.3)
 			.setElasticNetParam(0.8)
 			.setLabelCol("indexedLabel")
@@ -103,8 +94,6 @@ object BuildModel {
 			.setStages(Array(regexTokenizer, word2Vec, labelIndexer, featureIndexer, lr, rf, labelConverterLR, labelConverterRF))
 		val model = pipeline.fit(traindata)
 
-		
-		
 		model.save("hdfs://172.17.17.24:8020/analyse/flowMoni/model")
 		//		val predictions = model.transform(data_test)
 		//
@@ -114,24 +103,6 @@ object BuildModel {
 		//			.setMetricName("accuracy")
 		//		val accuracy = evaluator.evaluate(predictions)
 		//		println("Test Error = " + (1.0 - accuracy))
-
-	}
-	def getData(path: String, label: String): DataFrame = {
-		val rdd = sc.textFile(path)
-		val rowRdd = rdd.map(line => {
-			val s = URLDecoder.decode(line.replaceAll("%(?![0-9a-fA-F]{2})", "%25")).toLowerCase()
-			val r = DicAnalysis.parse(s).toStringWithOutNature("|")
-			Row(label, r)
-		})
-		val data = sqlContext.createDataFrame(rowRdd, types)
-		data
-	}
-	def getTrainData(path_pos: String, path_neg: String): DataFrame = {
-
-		val rowRdd_sql = getData(path_pos, "normal")
-		val rowRdd_normal = getData(path_pos, "sql")
-		val rowRdd = rowRdd_sql.union(rowRdd_normal)
-		rowRdd
 
 	}
 

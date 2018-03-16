@@ -21,8 +21,8 @@ object PredictOffline {
 		val sc = new SparkContext(conf)
 
 		val sqlContext = new SQLContext(sc)
-
-		val d = DataPretreatment.getESPosSamBeforeTime(sqlContext, 1)
+		val datapretreater=new  DataPretreater(sqlContext)
+		val d = datapretreater.getESPosSamBeforeTime( 1)
 		//d.write.parquet("hdfs://172.17.17.24:8020/analyse/flowMoni/testData")
 		d.persist(StorageLevel.MEMORY_AND_DISK)
 		val model = PipelineModel.load("hdfs://172.17.17.24:8020/analyse/flowMoni/model")
@@ -39,11 +39,11 @@ object PredictOffline {
 				val dstip = row.getAs[String]("dstip")
 				val uri = row.getAs[String]("uri_ori")
 				val predictionnb = row.getAs[Double]("predictionRF")
-				val probabilitynb = row.getAs[DenseVector]("probabilityRF").apply(0)
+				val probabilitynb = row.getAs[DenseVector]("probabilityRF").apply(predictionnb.toInt)
 				val predictedLabelnb=row.getAs[String]("predictedLabelRF")
 				
 				val predictionlr = row.getAs[Double]("predictionLR")
-				val probabilitylr = row.getAs[DenseVector]("probabilityLR").apply(0)
+				val probabilitylr = row.getAs[DenseVector]("probabilityLR").apply(predictionlr.toInt)
 				val predictedLabellr=row.getAs[String]("predictedLabelLR")
 				
 				if (predictedLabelnb == "sql" || predictedLabellr == "sql" ) {

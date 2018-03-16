@@ -16,7 +16,8 @@ object TimeUtil {
   def convert2stamp(time: String): Long = {
     val if_num_pattern = """^(\d+)$""".r
     if (if_num_pattern.findFirstIn(time).getOrElse(0) != 0) { //不等于0说明是纯数字
-      time.toLong
+    
+      time.substring(0,10).toLong
     } else {
       val fms = List(new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss", loc), new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", loc))
       var res: Long = 0

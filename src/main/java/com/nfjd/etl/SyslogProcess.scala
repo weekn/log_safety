@@ -64,7 +64,7 @@ object SyslogProcess {
           val k=field._1
           val v=s.group(Integer.parseInt(field._2))
           if(k=="firstrecvtime" && v.isInstanceOf[String]){//时间统一成时间撮
-            res_map = res_map + (k -> TimeUtil.convert2stamp(v))
+            res_map = res_map + (k -> TimeUtil.convert2stamp(v)*1000)//要13位的时间撮
           }else if(k=="eventname"){//给eventname2 取值 eventname的 hashcode
           	val v_hashcoe=v.hashCode().toString()+"hashcode"
           	res_map = res_map + ("eventname" ->v)
@@ -78,7 +78,7 @@ object SyslogProcess {
         for (key <- genlog_all_key) {
           if (!res_map.contains(key)) {
             if(key=="firstrecvtime"){
-              res_map = res_map + (key -> (new Date().getTime + "").toLong)
+              res_map = res_map + (key -> TimeUtil.getCurrentTimeStamp()*1000)//要13位的时间撮
             }else{
                res_map = res_map + (key -> " ")
             }

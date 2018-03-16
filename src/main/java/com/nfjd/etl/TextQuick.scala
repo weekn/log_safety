@@ -6,22 +6,74 @@ import java.util.UUID
 import com.nfjd.util.TimeUtil
 import java.util.Date
 import com.nfjd.util.ConfigUtil
+import org.apache.spark._
+import org.apache.spark.streaming._
+import org.apache.spark.streaming.StreamingContext._
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types.StructField
+import org.apache.spark.sql.types.IntegerType
+import org.apache.spark.sql.types.StringType
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.types.DateType
+import org.apache.spark.sql.types.LongType
+import com.nfjd.util.PgSqlUtil
+import java.sql.Timestamp
+import org.apache.spark.sql.Dataset
+import java.util.Properties
 
 object TextQuick {
-	
 
 	def main(args: Array[String]): Unit = {
-		val configUtil = new ConfigUtil()
-		configUtil.readConfig()
-		val starttime = System.nanoTime //系统纳米时间
+		val conf = new SparkConf().setAppName("Word2Vec example").setMaster("local[2]")
+		val sc = new SparkContext(conf)
+		val sqlContext = new SQLContext(sc)
+		val connectionProperties = new Properties();
 
-		for (i <- 1 to 10000) {
-			deal(configUtil.patterns)
-		}
-		val stoptime = System.nanoTime
-		val delta = stoptime - starttime
-		println(delta / 1000000d)
+		//增加数据库的用户名(user)密码(password),指定postgresql驱动(driver)
+		connectionProperties.put("user", "postgres");
+		connectionProperties.put("password", "postgres");
+		connectionProperties.put("driver", "org.postgresql.Driver");
+		val jdbcDF = sqlContext.read
+			.jdbc("jdbc:postgresql://172.17.17.70:5432/nxsoc5", "t_moni_flow_predict", connectionProperties);
 
+		//显示jdbcDF数据内容
+		jdbcDF.show();
+	}
+	def testPgconnet() {
+		val conf = new SparkConf().setAppName("Word2Vec example").setMaster("local[2]")
+		val sc = new SparkContext(conf)
+		val sqlContext = new SQLContext(sc)
+		val schema = StructType(List(
+			StructField("ruleid", StringType, nullable = false),
+			StructField("rule_time", LongType, nullable = true),
+			StructField("match_time", LongType, nullable = true)
+		))
+
+		val rdd = sc.parallelize(Seq(
+			Row("fds23", 1516678422.toLong, 1516678422.toLong),
+			Row("3213fds23", 1516678422.toLong, 1516678422.toLong),
+			Row("f32144444ds23", 1516678422.toLong, 1516678422.toLong)
+		))
+
+		val df = sqlContext.createDataFrame(rdd, schema)
+		df.foreachPartition(rdd => {
+			val conn = PgSqlUtil.getConn()
+			rdd.foreach(row => {
+				val ruleid = row.getAs[String]("ruleid")
+				val rule_time = new Timestamp(row.getAs[Long]("rule_time") * 1000)
+				val match_time = new Timestamp(row.getAs[Long]("match_time") * 1000)
+				val prep = conn.prepareStatement(
+					"""INSERT INTO public.flowlog_rule(ruleid,rule_time,match_time)  VALUES (?,?, ?); """
+				)
+				prep.setString(1, ruleid)
+				prep.setTimestamp(2, rule_time)
+				prep.setTimestamp(3, match_time)
+				prep.execute()
+			})
+			PgSqlUtil.releaseCon(conn)
+		})
+		PgSqlUtil.destory()
 	}
 	def deal(patterns: Seq[RegPattern]): Unit = {
 
@@ -108,7 +160,7 @@ object TextQuick {
 					}
 
 				}
-			
+
 				res_map
 			}
 			case None => Map()
